@@ -1,10 +1,10 @@
 # Windsurf for Arch Linux
 
-![Version](https://img.shields.io/badge/version-2.3.9-blue.svg)
+![Version](https://img.shields.io/badge/version-2.3.15-blue.svg)
 
 This project allows you to install **Windsurf**, Codeium's advanced AI-powered IDE, on Arch Linux (and derivatives like Manjaro).
 
-**Latest Version Available:** `2.3.9`
+**Latest Version Available:** `2.3.15`
 
 It provides two methods for installation: a quick automated install using the repository's latest info, or a local maintenance mode using Docker to fetch the absolute latest version directly from Codeium.
 
