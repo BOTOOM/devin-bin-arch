@@ -1,12 +1,12 @@
 # Maintainer: Patrick Fischer <aur@pathin.me>
 
-pkgbase=windsurf-bin
-pkgname=(windsurf-bin{,-electron-latest})
-pkgver=2.3.15
+pkgbase=devin-desktop-bin
+pkgname=(devin-desktop-bin{,-electron-latest})
+pkgver=3.0.12
 pkgrel=1
 arch=('x86_64')
-url="https://windsurf.com/"
-license=('LicenseRef-Windsurf Editor')
+url="https://devin.ai/download"
+license=('LicenseRef-Devin Desktop')
 depends=( ripgrep fd xdg-utils #replacements
     'alsa-lib'
     'dbus'
@@ -23,12 +23,12 @@ optdepends=('glib2: Move to trash functionality'
             'vulkan-driver')
 options=('!strip')
 makedepends=(tar sed desktop-file-utils)
-source=("https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt/pool/main/w/windsurf/Windsurf-linux-x64-2.3.15.deb"
+source=("https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/a335ac3d8c6b04d563d8bd757cadc86d305e3b12/Devin-linux-x64-3.0.12.deb"
 		"https://gitlab.archlinux.org/archlinux/packaging/packages/code/-/raw/main/code.sh")
-sha256sums=('bd740d4872aed1d56303e4d4342ec41f634fcc82bb1c12cd6c3e29546a0a13e6'
+sha256sums=('e2b903df4cde110d9e1bb8a13660281488dd6219e4d9ef201e805051bf380cde'
             '5da1525b5fe804b9192c05e1cbf8d751d852e3717fb2787c7ffe98fd5d93e8c1')
 build() {
-	tar -xf "data.tar.xz" --exclude 'usr/share/windsurf/[^r]*' --exclude 'usr/share/windsurf/*.pak'
+	tar -xf "data.tar.xz" --exclude 'usr/share/devin-desktop/[^r]*' --exclude 'usr/share/devin-desktop/*.pak'
 
 	# Ensure metainfo exists and safely move contents from appdata if present
 	mkdir -p usr/share/metainfo
@@ -49,26 +49,27 @@ build() {
 	fi
 	
 	# Launcher
-	_app=/usr/share/windsurf/resources/app
-	sed -e "s|code-flags|windsurf-flags|" code.sh \
+	_app=/usr/share/devin-desktop/resources/app
+	sed -e "s|code-flags|devin-desktop-flags|" code.sh \
 		-e "s|/usr/lib/code/out/cli.js|${_app}/out/cli.js|" \
 		-e "s|/usr/lib/code/code.mjs|--app=${_app}|" > run.sh
-	ln -sf /usr/bin/windsurf usr/share/windsurf/windsurf
+	ln -sf /usr/bin/devin-desktop usr/share/devin-desktop/devin-desktop
 	
 	# Replacements
-	# Ensure windsurd extension bin path exists for symlinks
-	mkdir -p usr/share/windsurf/resources/app/extensions/windsurf/bin
-	ln -svf /usr/bin/fd usr/share/windsurf/resources/app/extensions/windsurf/bin/fd
-	ln -svf /usr/bin/rg usr/share/windsurf/resources/app/node_modules/@vscode/ripgrep/bin/rg
-	ln -svf /usr/bin/xdg-open usr/share/windsurf/resources/app/node_modules/open/xdg-open
+	# Ensure windsurf extension bin path exists for symlinks
+	mkdir -p usr/share/devin-desktop/resources/app/extensions/windsurf/bin
+	ln -svf /usr/bin/fd usr/share/devin-desktop/resources/app/extensions/windsurf/bin/fd
+	ln -svf /usr/bin/rg usr/share/devin-desktop/resources/app/node_modules/@vscode/ripgrep/bin/rg
+	ln -svf /usr/bin/xdg-open usr/share/devin-desktop/resources/app/node_modules/open/xdg-open
 	
 	# SVG Icon (handle path changes across versions)
-	ICON_DEST="usr/share/icons/hicolor/scalable/apps/windsurf.svg"
+	ICON_DEST="usr/share/icons/hicolor/scalable/apps/devin-desktop.svg"
 	ICON_CANDIDATES=(
-		"usr/share/windsurf/resources/app/out/media/code-icon.svg"
-		"usr/share/windsurf/resources/app/out/media/code-iconsvg.svg"
-		"usr/share/windsurf/resources/app/out/media/windsurf-icon.svg"
-		"usr/share/windsurf/resources/app/out/vs/code/browser/workbench/media/code-icon.svg"
+		"usr/share/devin-desktop/resources/app/out/media/code-icon.svg"
+		"usr/share/devin-desktop/resources/app/out/media/code-iconsvg.svg"
+		"usr/share/devin-desktop/resources/app/out/media/devin-icon.svg"
+		"usr/share/devin-desktop/resources/app/out/vs/workbench/browser/media/code-icon.svg"
+		"usr/share/devin-desktop/resources/app/out/vs/code/browser/workbench/media/code-icon.svg"
 	)
 	ICON_FOUND=""
 	for icon in "${ICON_CANDIDATES[@]}"; do
@@ -84,26 +85,30 @@ build() {
 	fi
 	
 	# Hide entry of URL handler
-	desktop-file-edit --set-key Hidden --set-value true usr/share/applications/windsurf-url-handler.desktop
+	desktop-file-edit --set-key Hidden --set-value true usr/share/applications/devin-desktop-url-handler.desktop
 }
 
-package_windsurf-bin(){
-	pkgdesc="Windsurf (formerly Codeium) is the world's most advanced AI coding assistant for developers and enterprises. Windsurf Editor — the first AI-native IDE that keeps developers in flow."
+package_devin-desktop-bin(){
+	pkgdesc="Devin Desktop is an agent command center with a full IDE, formerly known as Windsurf."
 	cp -r --reflink=auto usr "${pkgdir}/usr"
-	_electron=electron$(rg -o -r '$1' '"electron": *"[^0-9]*([0-9]+)' usr/share/windsurf/resources/app/package.json)
+	_electron=electron$(rg -o -r '$1' '"electron": *"[^0-9]*([0-9]+)' usr/share/devin-desktop/resources/app/package.json)
 	echo $_electron
 	sed "s|name=electron|name=${_electron}|" run.sh > run-safe.sh
-	install -Dm755 run-safe.sh "${pkgdir}/usr/bin/windsurf"
+	install -Dm755 run-safe.sh "${pkgdir}/usr/bin/devin-desktop"
+	ln -sf devin-desktop "${pkgdir}/usr/bin/windsurf"
 	depends+=(${_electron}) # hidden from --printsrcinfo
-	provides=(windsurf)
-	conflicts=(windsurf windsurf-bin-electron-latest)
+	provides=(devin-desktop windsurf windsurf-bin)
+	conflicts=(devin-desktop devin-desktop-bin-electron-latest windsurf windsurf-bin windsurf-bin-electron-latest)
+	replaces=(windsurf-bin)
 }
 
-package_windsurf-bin-electron-latest(){
-	pkgdesc="Windsurf Editor on latest stable electron"
+package_devin-desktop-bin-electron-latest(){
+	pkgdesc="Devin Desktop on latest stable electron"
 	mv usr "${pkgdir}/usr" # breaks --repackage
-	install -Dm755 run.sh "${pkgdir}/usr/bin/windsurf"
+	install -Dm755 run.sh "${pkgdir}/usr/bin/devin-desktop"
+	ln -sf devin-desktop "${pkgdir}/usr/bin/windsurf"
 	depends+=(electron)
-	conflicts=(windsurf-bin windsurf)
-	provides=(windsurf-bin windsurf)
+	conflicts=(devin-desktop-bin devin-desktop windsurf-bin windsurf-bin-electron-latest windsurf)
+	provides=(devin-desktop-bin devin-desktop windsurf-bin windsurf)
+	replaces=(windsurf-bin-electron-latest)
 }

@@ -3,11 +3,11 @@ set -eo pipefail
 
 # --- Configuration ---
 # Default repo URL (can be overridden by env var)
-: "${GIT_REPO_URL:=https://github.com/BOTOOM/windsurf-bin-arch.git}"
-: "${CLONED_REPO_DIR_NAME:=windsurf-bin-arch}"
+: "${GIT_REPO_URL:=https://github.com/BOTOOM/devin-bin-arch.git}"
+: "${CLONED_REPO_DIR_NAME:=devin-bin-arch}"
 : "${PKGBUILD_SUBDIR:=package}"
-: "${WINDSURF_STANDARD_PKG_NAME:=windsurf-bin}"
-: "${WINDSURF_ELECTRON_PKG_NAME:=windsurf-bin-electron-latest}"
+: "${DEVIN_STANDARD_PKG_NAME:=devin-desktop-bin}"
+: "${DEVIN_ELECTRON_PKG_NAME:=devin-desktop-bin-electron-latest}"
 
 # --- Helper Functions ---
 log() {
@@ -49,13 +49,13 @@ get_pkgbuild_version() {
 
 # --- Main Script Logic ---
 main() {
-    log "Starting Windsurf Installer..."
+    log "Starting Devin Desktop Installer..."
     check_command "git"
     check_command "makepkg"
     check_command "pacman"
 
     # Create temp dir
-    TEMP_DIR=$(mktemp -d --suffix=-windsurf-install)
+    TEMP_DIR=$(mktemp -d --suffix=-devin-desktop-install)
     log "Created temporary directory: $TEMP_DIR"
 
     cleanup() {
@@ -68,17 +68,17 @@ main() {
     TARGET_PKG_NAME=""
     INSTALL_TYPE_FRIENDLY_NAME=""
 
-    # Check environment variable WINDSURF_INSTALL_CHOICE
-    USER_CHOICE="${WINDSURF_INSTALL_CHOICE:-}"
+    # Check environment variables. WINDSURF_INSTALL_CHOICE remains supported for old automation.
+    USER_CHOICE="${DEVIN_INSTALL_CHOICE:-${WINDSURF_INSTALL_CHOICE:-}}"
 
     if [ -z "$USER_CHOICE" ]; then
         {
             echo "--------------------------------------------------------------------"
-            echo " Windsurf Installer"
+            echo " Devin Desktop Installer"
             echo "--------------------------------------------------------------------"
-            echo "Please choose which Windsurf package to install:"
-            echo "  1) Windsurf (Standard - ${WINDSURF_STANDARD_PKG_NAME})"
-            echo "  2) Windsurf (Electron - ${WINDSURF_ELECTRON_PKG_NAME})"
+            echo "Please choose which Devin Desktop package to install:"
+            echo "  1) Devin Desktop (Standard - ${DEVIN_STANDARD_PKG_NAME})"
+            echo "  2) Devin Desktop (Electron - ${DEVIN_ELECTRON_PKG_NAME})"
             echo "--------------------------------------------------------------------"
             printf "Enter your choice (1 or 2, default: 1): " >&2
             read -r choice_num </dev/tty
@@ -96,15 +96,15 @@ main() {
 
     case "$USER_CHOICE" in
     "standard")
-        TARGET_PKG_NAME="$WINDSURF_STANDARD_PKG_NAME"
-        INSTALL_TYPE_FRIENDLY_NAME="Windsurf (Standard)"
+        TARGET_PKG_NAME="$DEVIN_STANDARD_PKG_NAME"
+        INSTALL_TYPE_FRIENDLY_NAME="Devin Desktop (Standard)"
         ;;
     "electron")
-        TARGET_PKG_NAME="$WINDSURF_ELECTRON_PKG_NAME"
-        INSTALL_TYPE_FRIENDLY_NAME="Windsurf (Electron)"
+        TARGET_PKG_NAME="$DEVIN_ELECTRON_PKG_NAME"
+        INSTALL_TYPE_FRIENDLY_NAME="Devin Desktop (Electron)"
         ;;
     *)
-        error_exit "Invalid value for WINDSURF_INSTALL_CHOICE: '$USER_CHOICE'. Must be 'standard' or 'electron'."
+        error_exit "Invalid value for DEVIN_INSTALL_CHOICE: '$USER_CHOICE'. Must be 'standard' or 'electron'."
         ;;
     esac
 

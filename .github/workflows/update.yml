@@ -1,4 +1,4 @@
-name: Update Windsurf AUR PKGBUILD
+name: Update Devin Desktop AUR PKGBUILD
 
 on:
   workflow_dispatch:
@@ -25,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y curl gnupg apt-transport-https coreutils
+          sudo apt-get install -y curl coreutils
 
       - name: Get latest version
         id: get_version
@@ -35,7 +35,7 @@ jobs:
           
           VERSION=$(echo "$OUTPUT" | cut -d' ' -f1)
           SHA256SUM=$(echo "$OUTPUT" | cut -d' ' -f2)
-          DEB_URL="https://windsurf-stable.codeiumdata.com/wVxQEIWkwPUEAGf3/apt/pool/main/w/windsurf/Windsurf-linux-x64-${VERSION}.deb"
+          DEB_URL=$(echo "$OUTPUT" | cut -d' ' -f3)
           
           echo "Detected version: $VERSION"
           echo "version=$VERSION" >> $GITHUB_OUTPUT
@@ -98,16 +98,16 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
-          commit-message: "chore: update windsurf to ${{ needs.check-version.outputs.version }}"
-          title: "Update windsurf to version ${{ needs.check-version.outputs.version }}"
+          commit-message: "chore: update devin desktop to ${{ needs.check-version.outputs.version }}"
+          title: "Update Devin Desktop to version ${{ needs.check-version.outputs.version }}"
           body: |
-            This PR updates the windsurf package to version ${{ needs.check-version.outputs.version }}.
+            This PR updates the Devin Desktop package to version ${{ needs.check-version.outputs.version }}.
             
             - Updated PKGBUILD version, checksum, and URL.
             - Updated README.md with the new version number and badge.
             
             This is an automated PR created by the version check workflow.
-          branch: "update-windsurf-${{ needs.check-version.outputs.version }}"
+          branch: "update-devin-desktop-${{ needs.check-version.outputs.version }}"
           base: "main"
           labels: "automated pr"
           delete-branch: true

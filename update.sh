@@ -2,7 +2,7 @@
 set -eo pipefail
 
 # --- Configuration ---
-readonly DOCKER_IMAGE_NAME="windsurf-version-checker"
+readonly DOCKER_IMAGE_NAME="devin-desktop-version-checker"
 readonly PKGBUILD_PATH="package/PKGBUILD"
 
 # --- Helper Functions ---
@@ -51,9 +51,10 @@ fi
 
 LATEST_VERSION=$(echo "$CHECK_OUTPUT" | awk '{print $1}')
 LATEST_SHA256=$(echo "$CHECK_OUTPUT" | awk '{print $2}')
+LATEST_URL=$(echo "$CHECK_OUTPUT" | awk '{print $3}')
 
-if [ -z "$LATEST_VERSION" ] || [ -z "$LATEST_SHA256" ]; then
-    error_exit "Could not parse version or SHA256 from container output: '$CHECK_OUTPUT'"
+if [ -z "$LATEST_VERSION" ] || [ -z "$LATEST_SHA256" ] || [ -z "$LATEST_URL" ]; then
+    error_exit "Could not parse version, SHA256, or URL from container output: '$CHECK_OUTPUT'"
 fi
 log "Latest available version is: $LATEST_VERSION"
 
@@ -74,8 +75,12 @@ sed -i "s/^pkgrel=.*/pkgrel=1/" "$PKGBUILD_PATH"
 # Update sha256sum (replaces the first sum in the sha256sums array)
 sed -i "/^sha256sums=('/s/'[^']*'/'$LATEST_SHA256'/" "$PKGBUILD_PATH"
 
+# Update source URL. The Devin Desktop URL contains an upstream build hash.
+sed -i "s|source=(\"[^\"]*\"|source=(\"$LATEST_URL\"|" "$PKGBUILD_PATH"
+
 log "PKGBUILD updated successfully!"
 log "New version: $LATEST_VERSION"
 log "New SHA256: $LATEST_SHA256"
+log "New URL: $LATEST_URL"
 
 log "You can now commit the changes and build the new package."

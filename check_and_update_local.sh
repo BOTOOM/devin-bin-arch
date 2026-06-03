@@ -2,7 +2,8 @@
 set -e
 
 # Configuration
-PKG_NAME="windsurf-bin"
+PKG_NAME="devin-desktop-bin"
+LEGACY_PKG_NAME="windsurf-bin"
 PKGBUILD_PATH="package/PKGBUILD"
 
 # Colors
@@ -41,6 +42,8 @@ TARGET_VERSION="${PKGVER}-${PKGREL}"
 # Check installed version
 if pacman -Q "$PKG_NAME" &>/dev/null; then
     INSTALLED_VERSION=$(pacman -Q "$PKG_NAME" | awk '{print $2}')
+elif pacman -Q "$LEGACY_PKG_NAME" &>/dev/null; then
+    INSTALLED_VERSION="$(pacman -Q "$LEGACY_PKG_NAME" | awk '{print $2}') ($LEGACY_PKG_NAME)"
 else
     INSTALLED_VERSION="None"
 fi
@@ -48,7 +51,7 @@ fi
 log "Local PKGBUILD version: $TARGET_VERSION"
 log "Installed version:      $INSTALLED_VERSION"
 
-if [ "$TARGET_VERSION" != "$INSTALLED_VERSION" ]; then
+if [ "$TARGET_VERSION" != "${INSTALLED_VERSION%% *}" ]; then
     echo ""
     warn "A new version (or uninstalled version) is available."
     echo -e "  Current: $INSTALLED_VERSION"

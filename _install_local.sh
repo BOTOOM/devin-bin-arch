@@ -2,10 +2,11 @@
 set -eo pipefail
 
 # --- Configuration ---
-: "${GIT_REPO_URL:=https://github.com/BOTOOM/windsurf-bin-arch.git}"
-: "${CLONED_REPO_DIR_NAME:=windsurf-bin-arch}"
+: "${GIT_REPO_URL:=https://github.com/BOTOOM/devin-bin-arch.git}"
+: "${CLONED_REPO_DIR_NAME:=devin-bin-arch}"
 : "${PKGBUILD_SUBDIR:=package}"
-: "${WINDSURF_PKG_NAME:=windsurf-bin}"
+: "${DEVIN_PKG_NAME:=devin-desktop-bin}"
+: "${LEGACY_WINDSURF_PKG_NAME:=windsurf-bin}"
 
 # --- Helper Functions ---
 log() {
@@ -47,7 +48,7 @@ get_pkgbuild_version() {
 
 # --- Main Script Logic ---
 main() {
-    log "Starting Windsurf Local Installer..."
+    log "Starting Devin Desktop Local Installer..."
     check_command "git"
     check_command "makepkg"
     check_command "pacman"
@@ -62,7 +63,12 @@ main() {
 
     # Check Versions
     PKGBUILD_VERSION=$(get_pkgbuild_version "PKGBUILD")
-    INSTALLED_VERSION=$(get_installed_version "$WINDSURF_PKG_NAME")
+    INSTALLED_VERSION=$(get_installed_version "$DEVIN_PKG_NAME")
+    if [ -z "$INSTALLED_VERSION" ]; then
+        LEGACY_INSTALLED_VERSION=$(get_installed_version "$LEGACY_WINDSURF_PKG_NAME")
+    else
+        LEGACY_INSTALLED_VERSION=""
+    fi
     
     log "Version available in repo: $PKGBUILD_VERSION"
 
@@ -72,7 +78,7 @@ main() {
         log "Currently installed version: $INSTALLED_VERSION"
         
         if [ "$INSTALLED_VERSION" == "$PKGBUILD_VERSION" ]; then
-            printf "%s version %s is already installed and up-to-date. Reinstall anyway? (y/N): " "$WINDSURF_PKG_NAME" "$PKGBUILD_VERSION" >&2
+            printf "%s version %s is already installed and up-to-date. Reinstall anyway? (y/N): " "$DEVIN_PKG_NAME" "$PKGBUILD_VERSION" >&2
             read -r reinstall_choice </dev/tty
             if [[ "$reinstall_choice" =~ ^[Yy]$ ]]; then
                 PROCEED_WITH_BUILD=true
@@ -90,8 +96,12 @@ main() {
             fi
         fi
     else
-        log "$WINDSURF_PKG_NAME is not currently installed."
-        printf "Install %s version %s? (Y/n): " "$WINDSURF_PKG_NAME" "$PKGBUILD_VERSION" >&2
+        if [ -n "$LEGACY_INSTALLED_VERSION" ]; then
+            log "Legacy $LEGACY_WINDSURF_PKG_NAME version $LEGACY_INSTALLED_VERSION is installed and will be replaced by $DEVIN_PKG_NAME."
+        else
+            log "$DEVIN_PKG_NAME is not currently installed."
+        fi
+        printf "Install %s version %s? (Y/n): " "$DEVIN_PKG_NAME" "$PKGBUILD_VERSION" >&2
         read -r install_new_choice </dev/tty
         if [[ ! "$install_new_choice" =~ ^[Nn]$ ]]; then # Default to Yes
             PROCEED_WITH_BUILD=true
@@ -111,12 +121,12 @@ main() {
     fi
 
     # Find the built package file for the target only
-    PKG_FILE=$(find . -maxdepth 1 -name "${WINDSURF_PKG_NAME}-${PKGBUILD_VERSION}-*.pkg.tar.*" -print -quit)
+    PKG_FILE=$(find . -maxdepth 1 -name "${DEVIN_PKG_NAME}-${PKGBUILD_VERSION}-*.pkg.tar.*" -print -quit)
     if [ -z "$PKG_FILE" ]; then
-        error_exit "Could not find built package file for ${WINDSURF_PKG_NAME}."
+        error_exit "Could not find built package file for ${DEVIN_PKG_NAME}."
     fi
 
-    log "Installing ${WINDSURF_PKG_NAME} from ${PKG_FILE}..."
+    log "Installing ${DEVIN_PKG_NAME} from ${PKG_FILE}..."
     # Install only the target package, allowing interactive conflict resolution via TTY
     if ! sudo pacman -U "$PKG_FILE" </dev/tty; then
         error_exit "Installation failed."
