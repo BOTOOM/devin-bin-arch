@@ -1,10 +1,10 @@
 # Devin Desktop for Arch Linux
 
-![Version](https://img.shields.io/badge/version-3.0.12-blue.svg)
+![Version](https://img.shields.io/badge/version-3.0.21-blue.svg)
 
 This project repackages the official **Devin Desktop** Linux `.deb` for Arch Linux and derivatives like Manjaro.
 
-**Latest Version Available:** `3.0.12`
+**Latest Version Available:** `3.0.21`
 
 Devin Desktop is the successor to Windsurf. The package name is now `devin-desktop-bin`, but it still provides a compatibility `windsurf` command symlink for existing shell scripts and workflows.
 
