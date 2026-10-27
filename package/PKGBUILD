@@ -2,7 +2,7 @@
 
 pkgbase=devin-desktop-bin
 pkgname=(devin-desktop-bin{,-electron-latest})
-pkgver=3.11.216
+pkgver=3.11.228
 pkgrel=1
 arch=('x86_64')
 url="https://devin.ai/download"
@@ -23,9 +23,9 @@ optdepends=('glib2: Move to trash functionality'
             'vulkan-driver')
 options=('!strip')
 makedepends=(tar sed desktop-file-utils)
-source=("https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/d70b4713dfeaf856a4d8a35b35eac0c86e07af07/Devin-linux-x64-3.11.216.deb"
+source=("https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/053434014dbdb7a662a14e38752946a0dafb97f2/Devin-linux-x64-3.11.228.deb"
 		"https://gitlab.archlinux.org/archlinux/packaging/packages/code/-/raw/main/code.sh")
-sha256sums=('de54cce18cd6be9e1a4c57f6ccb3b528f237f82ff1da6cfee4ccf0a9230929af'
+sha256sums=('69db43294cacca7dee2ecc7301069dc4f88936c577443fb58e8be04f11f05594'
             '5da1525b5fe804b9192c05e1cbf8d751d852e3717fb2787c7ffe98fd5d93e8c1')
 build() {
 	tar -xf "data.tar.xz" --exclude 'usr/share/devin-desktop/[^r]*' --exclude 'usr/share/devin-desktop/*.pak'
