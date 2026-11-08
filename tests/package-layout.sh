@@ -10,8 +10,8 @@ error() {
 }
 
 test_layout() (
-    local modules=$1 ripgrep=$2 handler=$3 failure=${4:-}
-    local work="$TEST_ROOT/$modules-$ripgrep-$handler-${failure:-success}"
+    local modules=$1 ripgrep=$2 desktop_file=$3 failure=${4:-}
+    local work="$TEST_ROOT/$modules-$ripgrep-$desktop_file-${failure:-success}"
     mkdir -p "$work/archive"
     cd "$work/archive"
     local app=usr/share/devin-desktop/resources/app
@@ -40,7 +40,7 @@ test_layout() (
     fi
     if [[ "$failure" != handler ]]; then
         printf '[Desktop Entry]\nName=Devin URL Handler\nType=Application\nExec=devin-desktop --open-url %%U\n' \
-            > "usr/share/applications/$handler"
+            > "usr/share/applications/$desktop_file"
     fi
     tar -cJf "$work/data.tar.xz" ./usr
     cd "$work"
@@ -68,7 +68,7 @@ test_layout() (
         [[ -f "$app/node_modules.asar" ]]
         [[ ! -e "$app/node_modules/open/xdg-open" ]]
     fi
-    grep -Fx 'Hidden=true' "usr/share/applications/$handler"
+    grep -Fx 'Hidden=true' "usr/share/applications/$desktop_file"
     local base_depends=("${depends[@]}")
     pkgdir="$work/standard"
     mkdir -p "$pkgdir"
