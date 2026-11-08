@@ -144,7 +144,7 @@ To run the same build locally without installing Devin Desktop on your host:
 bash scripts/build-packages.sh
 ```
 
-This requires Docker and writes build outputs under `package/`. The container installs build dependencies and changes ownership of the mounted `package/` directory to its build user; use a disposable clone.
+This requires Docker and writes build outputs under `package/`. The container installs build dependencies and builds as the checkout owner, preserving host file ownership. Repeated runs force-rebuild existing package archives.
 
 ## Troubleshooting package layout changes
 
