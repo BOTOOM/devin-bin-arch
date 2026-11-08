@@ -16,11 +16,20 @@ docker run --rm \
         fi
         chown -R builder:builder /workspace/package
         sudo -u builder makepkg --syncdeps --noconfirm --cleanbuild
+        bash /workspace/tests/package-layout.sh
         source PKGBUILD
+        pacman -Si "electron$(cat src/electron-major)" electron > /dev/null
         for name in "${pkgname[@]}"; do
             package="${name}-${pkgver}-${pkgrel}-x86_64.pkg.tar.zst"
             bsdtar -tf "$package" > "$package.files"
+            bsdtar -xOf "$package" .PKGINFO > "$package.info"
             grep -Fx "usr/bin/devin-desktop" "$package.files"
             grep -Fx "usr/bin/windsurf" "$package.files"
+            runtime=electron
+            if [[ "$name" == devin-desktop-bin ]]; then
+                runtime+="$(cat src/electron-major)"
+            fi
+            grep -Fx "depend = $runtime" "$package.info"
+            bsdtar -xOf "$package" usr/bin/devin-desktop | grep -Fx "name=$runtime"
         done
     '

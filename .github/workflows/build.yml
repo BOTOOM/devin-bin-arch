@@ -5,7 +5,6 @@ on:
   push:
     branches:
       - main
-      - fix/devin-ripgrep-layout
   workflow_call:
 
 permissions:
@@ -38,6 +37,4 @@ jobs:
           path: |
             archive-layout.txt
             package/*.pkg.tar.zst.files
-            upstream.deb
-            package/code.sh
-          compression-level: 0
+            package/*.pkg.tar.zst.info

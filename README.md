@@ -136,7 +136,7 @@ sudo pacman -U devin-desktop-bin-electron-latest-3.0.12-1-x86_64.pkg.tar.*
 
 The update workflow runs on a schedule, checks the Devin Desktop changelog, and builds both split packages in an Arch Linux container before opening and merging an automated PR. A failed build blocks the update. The AUR publish workflow also builds the packages before publishing.
 
-The build workflow checks the upstream checksum and builds both variants on pushes to `main` and pull requests. It saves the upstream file layout and package file lists as diagnostic artifacts.
+The build workflow checks the upstream checksum and builds both variants on pushes to `main` and pull requests. It tests the old and new layouts, verifies the packaged launchers and Electron dependencies, and saves the upstream file layout, package file lists, and package metadata as diagnostic artifacts.
 
 To run the same build locally without installing Devin Desktop on your host:
 
