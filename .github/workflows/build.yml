@@ -1,0 +1,33 @@
+name: Build Devin Desktop packages
+
+on:
+  pull_request:
+  push:
+    branches-ignore:
+      - main
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect upstream archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          source package/PKGBUILD
+          curl -fsSL "${source[0]}" -o upstream.deb
+          printf '%s  upstream.deb\n' "${sha256sums[0]}" | sha256sum -c -
+          ar x upstream.deb data.tar.xz
+          tar -tf data.tar.xz > archive-layout.txt
+          grep -E '(/rg$|ripgrep|/fd$|/xdg-open$|icon.*svg$)' archive-layout.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: upstream-layout
+          path: archive-layout.txt
