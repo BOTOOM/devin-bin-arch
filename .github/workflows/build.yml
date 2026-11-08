@@ -29,23 +29,7 @@ jobs:
           grep -E '(/rg$|/fd$|/xdg-open$|/out/media/code-icon.svg$|/applications/)' archive-layout.txt
 
       - name: Build both split packages on Arch Linux
-        run: |
-          docker run --rm \
-            -v "$PWD:/workspace" \
-            -w /workspace/package \
-            archlinux:base-devel bash -euo pipefail -c '
-              pacman -Syu --noconfirm
-              useradd -m builder
-              printf "builder ALL=(ALL) NOPASSWD: ALL\n" > /etc/sudoers.d/builder
-              cp /workspace/upstream.deb Devin-linux-x64-$(bash -c "source PKGBUILD; echo \$pkgver").deb
-              chown -R builder:builder /workspace
-              sudo -u builder makepkg --syncdeps --noconfirm --cleanbuild
-              for package in devin-desktop-bin-*.pkg.tar.zst; do
-                bsdtar -tf "$package" > "$package.files"
-                grep -Fx "usr/bin/devin-desktop" "$package.files"
-                grep -Fx "usr/bin/windsurf" "$package.files"
-              done
-            '
+        run: bash scripts/build-packages.sh
 
       - uses: actions/upload-artifact@v4
         if: always()
@@ -55,4 +39,5 @@ jobs:
             archive-layout.txt
             package/*.pkg.tar.zst.files
             upstream.deb
+            package/code.sh
           compression-level: 0
