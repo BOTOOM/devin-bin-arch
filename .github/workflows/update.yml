@@ -93,6 +93,19 @@ jobs:
           sed -i "s/\*\*Latest Version Available:\*\* \`.*\`/**Latest Version Available:** \`$VERSION\`/" "$README_PATH" || true
           sed -i "s/badge\/version-.*-blue/badge\/version-$VERSION-blue/" "$README_PATH" || true
 
+      - name: Build updated packages before creating or merging a PR
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace/package \
+            archlinux:base-devel bash -euo pipefail -c '
+              pacman -Syu --noconfirm
+              useradd -m builder
+              printf "builder ALL=(ALL) NOPASSWD: ALL\n" > /etc/sudoers.d/builder
+              chown -R builder:builder /workspace
+              sudo -u builder makepkg --syncdeps --noconfirm --cleanbuild
+            '
+
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v5

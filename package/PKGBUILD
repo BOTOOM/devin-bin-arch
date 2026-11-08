@@ -3,7 +3,7 @@
 pkgbase=devin-desktop-bin
 pkgname=(devin-desktop-bin{,-electron-latest})
 pkgver=3.12.28
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 url="https://devin.ai/download"
 license=('LicenseRef-Devin Desktop')
@@ -60,15 +60,16 @@ build() {
 	mkdir -p usr/share/devin-desktop/resources/app/extensions/windsurf/bin
 	ln -svf /usr/bin/fd usr/share/devin-desktop/resources/app/extensions/windsurf/bin/fd
 
-	# Ripgrep bundled binary location (handle path/package changes across versions:
-	# @vscode/ripgrep/bin/rg -> @vscode/ripgrep-universal/bin/linux-x64/rg as of v3.6.22)
+	# Native binaries live outside the ASAR archive in newer releases.
 	RG_DEST_CANDIDATES=(
+		"usr/share/devin-desktop/resources/app/node_modules.asar.unpacked/@vscode/ripgrep-universal/bin/linux-x64/rg"
+		"usr/share/devin-desktop/resources/app/node_modules.asar.unpacked/@vscode/ripgrep/bin/rg"
 		"usr/share/devin-desktop/resources/app/node_modules/@vscode/ripgrep-universal/bin/linux-x64/rg"
 		"usr/share/devin-desktop/resources/app/node_modules/@vscode/ripgrep/bin/rg"
 	)
 	RG_DEST=""
 	for rg_dest in "${RG_DEST_CANDIDATES[@]}"; do
-		if [ -d "$(dirname "$rg_dest")" ]; then
+		if [ -f "$rg_dest" ]; then
 			RG_DEST="$rg_dest"
 			break
 		fi
@@ -80,7 +81,14 @@ build() {
 		return 1
 	fi
 
-	ln -svf /usr/bin/xdg-open usr/share/devin-desktop/resources/app/node_modules/open/xdg-open
+	if [ -f usr/share/devin-desktop/resources/app/node_modules/open/xdg-open ]; then
+		ln -svf /usr/bin/xdg-open usr/share/devin-desktop/resources/app/node_modules/open/xdg-open
+	elif [ -f usr/share/devin-desktop/resources/app/node_modules.asar ]; then
+		printf '%s\n' "Keeping the bundled open helper inside node_modules.asar."
+	else
+		error "Neither node_modules/open/xdg-open nor node_modules.asar was found."
+		return 1
+	fi
 	
 	# SVG Icon (handle path changes across versions)
 	ICON_DEST="usr/share/icons/hicolor/scalable/apps/devin-desktop.svg"
@@ -105,7 +113,22 @@ build() {
 	fi
 	
 	# Hide entry of URL handler
-	desktop-file-edit --set-key Hidden --set-value true usr/share/applications/devin-desktop-url-handler.desktop
+	URL_HANDLER_CANDIDATES=(
+		"usr/share/applications/devin-desktop.UrlHandler.desktop"
+		"usr/share/applications/devin-desktop-url-handler.desktop"
+	)
+	URL_HANDLER_FOUND=""
+	for handler in "${URL_HANDLER_CANDIDATES[@]}"; do
+		if [ -f "$handler" ]; then
+			URL_HANDLER_FOUND="$handler"
+			break
+		fi
+	done
+	if [ -z "$URL_HANDLER_FOUND" ]; then
+		error "Devin Desktop URL handler desktop file was not found."
+		return 1
+	fi
+	desktop-file-edit --set-key Hidden --set-value true "$URL_HANDLER_FOUND"
 }
 
 package_devin-desktop-bin(){

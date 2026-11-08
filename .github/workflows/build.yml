@@ -3,8 +3,9 @@ name: Build Devin Desktop packages
 on:
   pull_request:
   push:
-    branches-ignore:
+    branches:
       - main
+      - fix/devin-ripgrep-layout
   workflow_call:
 
 permissions:
@@ -25,9 +26,33 @@ jobs:
           printf '%s  upstream.deb\n' "${sha256sums[0]}" | sha256sum -c -
           ar x upstream.deb data.tar.xz
           tar -tf data.tar.xz > archive-layout.txt
-          grep -E '(/rg$|ripgrep|/fd$|/xdg-open$|icon.*svg$)' archive-layout.txt
+          grep -E '(/rg$|/fd$|/xdg-open$|/out/media/code-icon.svg$|/applications/)' archive-layout.txt
+
+      - name: Build both split packages on Arch Linux
+        run: |
+          docker run --rm \
+            -v "$PWD:/workspace" \
+            -w /workspace/package \
+            archlinux:base-devel bash -euo pipefail -c '
+              pacman -Syu --noconfirm
+              useradd -m builder
+              printf "builder ALL=(ALL) NOPASSWD: ALL\n" > /etc/sudoers.d/builder
+              cp /workspace/upstream.deb Devin-linux-x64-$(bash -c "source PKGBUILD; echo \$pkgver").deb
+              chown -R builder:builder /workspace
+              sudo -u builder makepkg --syncdeps --noconfirm --cleanbuild
+              for package in devin-desktop-bin-*.pkg.tar.zst; do
+                bsdtar -tf "$package" > "$package.files"
+                grep -Fx "usr/bin/devin-desktop" "$package.files"
+                grep -Fx "usr/bin/windsurf" "$package.files"
+              done
+            '
 
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: upstream-layout
-          path: archive-layout.txt
+          path: |
+            archive-layout.txt
+            package/*.pkg.tar.zst.files
+            upstream.deb
+          compression-level: 0
