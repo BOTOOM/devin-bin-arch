@@ -134,7 +134,23 @@ sudo pacman -U devin-desktop-bin-electron-latest-3.0.12-1-x86_64.pkg.tar.*
 
 ## Automated Updates
 
-The update workflow runs on a schedule, checks the Devin Desktop changelog, and opens an automated PR when a newer Linux `.deb` is available.
+The update workflow runs on a schedule, checks the Devin Desktop changelog, and builds both split packages in an Arch Linux container before opening and merging an automated PR. A failed build blocks the update. The AUR publish workflow also builds the packages before publishing.
+
+The build workflow checks the upstream checksum and builds both variants on pushes to `main` and pull requests. It tests the old and new layouts, verifies the packaged launchers and Electron dependencies, and saves the upstream file layout, package file lists, and package metadata as diagnostic artifacts.
+
+To run the same build locally without installing Devin Desktop on your host:
+
+```bash
+bash scripts/build-packages.sh
+```
+
+This requires Docker and writes build outputs under `package/`. The container installs build dependencies and builds as the checkout owner, preserving host file ownership. Repeated runs force-rebuild existing package archives.
+
+## Troubleshooting package layout changes
+
+Version `3.12.28` moved the bundled ripgrep binary to `resources/app/node_modules.asar.unpacked/@vscode/ripgrep-universal/bin/linux-x64/rg`. Package release `3.12.28-2` supports that location and the older unarchived locations. It also handles the renamed `devin-desktop.UrlHandler.desktop` file and detects the Electron major version from the bundled runtime without executing it: upstream no longer declares that version in `package.json`. When dependencies are stored in `node_modules.asar`, the bundled `open` helper is preserved rather than attempting to replace a file inside that archive.
+
+If a future update fails during `build()`, inspect the build workflow's `upstream-layout` artifact. A successful version-check job alone does not mean that the package builds.
 
 ## Notes
 

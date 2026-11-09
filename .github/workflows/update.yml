@@ -93,6 +93,9 @@ jobs:
           sed -i "s/\*\*Latest Version Available:\*\* \`.*\`/**Latest Version Available:** \`$VERSION\`/" "$README_PATH" || true
           sed -i "s/badge\/version-.*-blue/badge\/version-$VERSION-blue/" "$README_PATH" || true
 
+      - name: Build updated packages before creating or merging a PR
+        run: bash scripts/build-packages.sh
+
       - name: Create Pull Request
         id: cpr
         uses: peter-evans/create-pull-request@v5

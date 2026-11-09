@@ -1,0 +1,40 @@
+name: Build Devin Desktop packages
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Inspect upstream archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          source package/PKGBUILD
+          curl -fsSL "${source[0]}" -o upstream.deb
+          printf '%s  upstream.deb\n' "${sha256sums[0]}" | sha256sum -c -
+          ar x upstream.deb data.tar.xz
+          tar -tf data.tar.xz > archive-layout.txt
+          grep -E '(/rg$|/fd$|/xdg-open$|/out/media/code-icon.svg$|/applications/)' archive-layout.txt
+
+      - name: Build both split packages on Arch Linux
+        run: bash scripts/build-packages.sh
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: upstream-layout
+          path: |
+            archive-layout.txt
+            package/*.pkg.tar.zst.files
+            package/*.pkg.tar.zst.info

@@ -23,6 +23,9 @@ jobs:
           version=$(grep -oP 'pkgver=\K.*' package/PKGBUILD)
           echo "version=$version" >> $GITHUB_OUTPUT
 
+      - name: Build packages before publishing to AUR
+        run: bash scripts/build-packages.sh
+
       - name: Publish AUR package
         uses: KSXGitHub/github-actions-deploy-aur@v3.0.1
         with:

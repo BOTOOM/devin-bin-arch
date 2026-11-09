@@ -3,7 +3,7 @@
 pkgbase=devin-desktop-bin
 pkgname=(devin-desktop-bin{,-electron-latest})
 pkgver=3.12.28
-pkgrel=1
+pkgrel=2
 arch=('x86_64')
 url="https://devin.ai/download"
 license=('LicenseRef-Devin Desktop')
@@ -22,12 +22,23 @@ optdepends=('glib2: Move to trash functionality'
             'lsof: Terminal splitting'
             'vulkan-driver')
 options=('!strip')
-makedepends=(tar sed desktop-file-utils)
+makedepends=(tar sed desktop-file-utils binutils)
 source=("https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/91c3aec41579d2c1795b64f82fa6a8a202ea4c69/Devin-linux-x64-3.12.28.deb"
 		"https://gitlab.archlinux.org/archlinux/packaging/packages/code/-/raw/main/code.sh")
 sha256sums=('5280e1789e29df3ee3a2decbfcf7102a06c37c1fb63f7183ac511d9d574a1602'
             '5da1525b5fe804b9192c05e1cbf8d751d852e3717fb2787c7ffe98fd5d93e8c1')
 build() {
+	# Read the bundled runtime's version without executing the upstream binary.
+	tar -xOf data.tar.xz ./usr/share/devin-desktop/devin-desktop \
+		| strings \
+		| sed -n 's|^Chrome/[0-9.]* Electron/\([0-9][0-9]*\)\.[0-9.]*$|\1|p' \
+		| sort -u > electron-major
+	ELECTRON_MAJOR=$(cat electron-major)
+	if [[ ! "$ELECTRON_MAJOR" =~ ^[0-9]+$ ]]; then
+		error "Could not determine a unique Electron major version from the bundled runtime."
+		return 1
+	fi
+
 	tar -xf "data.tar.xz" --exclude 'usr/share/devin-desktop/[^r]*' --exclude 'usr/share/devin-desktop/*.pak'
 
 	# Ensure metainfo exists and safely move contents from appdata if present
@@ -60,15 +71,16 @@ build() {
 	mkdir -p usr/share/devin-desktop/resources/app/extensions/windsurf/bin
 	ln -svf /usr/bin/fd usr/share/devin-desktop/resources/app/extensions/windsurf/bin/fd
 
-	# Ripgrep bundled binary location (handle path/package changes across versions:
-	# @vscode/ripgrep/bin/rg -> @vscode/ripgrep-universal/bin/linux-x64/rg as of v3.6.22)
+	# Native binaries live outside the ASAR archive in newer releases.
 	RG_DEST_CANDIDATES=(
+		"usr/share/devin-desktop/resources/app/node_modules.asar.unpacked/@vscode/ripgrep-universal/bin/linux-x64/rg"
+		"usr/share/devin-desktop/resources/app/node_modules.asar.unpacked/@vscode/ripgrep/bin/rg"
 		"usr/share/devin-desktop/resources/app/node_modules/@vscode/ripgrep-universal/bin/linux-x64/rg"
 		"usr/share/devin-desktop/resources/app/node_modules/@vscode/ripgrep/bin/rg"
 	)
 	RG_DEST=""
 	for rg_dest in "${RG_DEST_CANDIDATES[@]}"; do
-		if [ -d "$(dirname "$rg_dest")" ]; then
+		if [ -f "$rg_dest" ]; then
 			RG_DEST="$rg_dest"
 			break
 		fi
@@ -80,7 +92,14 @@ build() {
 		return 1
 	fi
 
-	ln -svf /usr/bin/xdg-open usr/share/devin-desktop/resources/app/node_modules/open/xdg-open
+	if [ -f usr/share/devin-desktop/resources/app/node_modules/open/xdg-open ]; then
+		ln -svf /usr/bin/xdg-open usr/share/devin-desktop/resources/app/node_modules/open/xdg-open
+	elif [ -f usr/share/devin-desktop/resources/app/node_modules.asar ]; then
+		printf '%s\n' "Keeping the bundled open helper inside node_modules.asar."
+	else
+		error "Neither node_modules/open/xdg-open nor node_modules.asar was found."
+		return 1
+	fi
 	
 	# SVG Icon (handle path changes across versions)
 	ICON_DEST="usr/share/icons/hicolor/scalable/apps/devin-desktop.svg"
@@ -105,14 +124,29 @@ build() {
 	fi
 	
 	# Hide entry of URL handler
-	desktop-file-edit --set-key Hidden --set-value true usr/share/applications/devin-desktop-url-handler.desktop
+	URL_HANDLER_CANDIDATES=(
+		"usr/share/applications/devin-desktop.UrlHandler.desktop"
+		"usr/share/applications/devin-desktop-url-handler.desktop"
+	)
+	URL_HANDLER_FOUND=""
+	for handler in "${URL_HANDLER_CANDIDATES[@]}"; do
+		if [ -f "$handler" ]; then
+			URL_HANDLER_FOUND="$handler"
+			break
+		fi
+	done
+	if [ -z "$URL_HANDLER_FOUND" ]; then
+		error "Devin Desktop URL handler desktop file was not found."
+		return 1
+	fi
+	desktop-file-edit --set-key Hidden --set-value true "$URL_HANDLER_FOUND"
 }
 
 package_devin-desktop-bin(){
 	pkgdesc="Devin Desktop is an agent command center with a full IDE, formerly known as Windsurf."
 	cp -r --reflink=auto usr "${pkgdir}/usr"
-	_electron=electron$(rg -o -r '$1' '"electron": *"[^0-9]*([0-9]+)' usr/share/devin-desktop/resources/app/package.json)
-	echo $_electron
+	_electron="electron$(cat electron-major)"
+	echo "$_electron"
 	sed "s|name=electron|name=${_electron}|" run.sh > run-safe.sh
 	install -Dm755 run-safe.sh "${pkgdir}/usr/bin/devin-desktop"
 	ln -sf devin-desktop "${pkgdir}/usr/bin/windsurf"
