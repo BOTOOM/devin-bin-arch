@@ -2,7 +2,7 @@
 
 pkgbase=devin-desktop-bin
 pkgname=(devin-desktop-bin{,-electron-latest})
-pkgver=3.12.32
+pkgver=3.12.43
 pkgrel=1
 arch=('x86_64')
 url="https://devin.ai/download"
@@ -23,9 +23,9 @@ optdepends=('glib2: Move to trash functionality'
             'vulkan-driver')
 options=('!strip')
 makedepends=(tar sed desktop-file-utils binutils)
-source=("https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/1126aba4a596c3bb4c3a3b10f472e10448be1fd8/Devin-linux-x64-3.12.32.deb"
+source=("https://windsurf-stable.codeiumdata.com/linux-x64-deb/stable/517d03d73926d6d71330b47ec14ceb6e56469159/Devin-linux-x64-3.12.43.deb"
 		"https://gitlab.archlinux.org/archlinux/packaging/packages/code/-/raw/main/code.sh")
-sha256sums=('b0dc1b28c046ea360c5d25c4bd3c40127180c68a29414766cefe4562154218e8'
+sha256sums=('cd4e4694677f592561f794f790fe59dbbbc7b8f5ba474dcdecf4f813b1063692'
             '5da1525b5fe804b9192c05e1cbf8d751d852e3717fb2787c7ffe98fd5d93e8c1')
 build() {
 	# Read the bundled runtime's version without executing the upstream binary.
